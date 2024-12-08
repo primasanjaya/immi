@@ -3,52 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Save to Google Sheet</title>
+    <title>Dynamic Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        td select, td input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background: #007BFF;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Person Details Form</h1>
-    <form id="personForm">
-        <div>
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-        <div>
-            <label>Category:</label>
-            <input type="radio" id="adult" name="category" value="Adult" required>
-            <label for="adult">Adult</label>
-            <input type="radio" id="child" name="category" value="Child">
-            <label for="child">Child</label>
-            <input type="radio" id="baby" name="category" value="Baby">
-            <label for="baby">Baby</label>
-        </div>
-        <button type="button" onclick="submitForm()">Submit</button>
-    </form>
-    <script>
-        async function submitForm() {
-            const name = document.getElementById('name').value;
-            const category = document.querySelector('input[name="category"]:checked');
+    <div class="container">
+        <h1>Registrasi Pengajian IMMI</h1>
+        <form id="personForm">
+            <table id="personTable">
+                <thead>
+                    <tr>
+                        <th>Nama Lengkap</th>
+                        <th>Kategori</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" name="name" placeholder="Enter name" required></td>
+                        <td>
+                            <select name="category" required>
+                                <option value="" disabled selected>Kategori</option>
+                                <option value="Adult">Dewasa</option>
+                                <option value="Child">Anak</option>
+                                <option value="Baby">Bayi</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button type="button" class="removeRowBtn" onclick="removeRow(this)">Remove</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="btn" onclick="addRow()">Add Person</button>
+            <button type="button" class="btn" style="background: #28a745;" onclick="submitForm()">Submit All</button>
+        </form>
+    </div>
 
-            if (!name || !category) {
-                alert('Please fill out all fields.');
+    <script>
+        function addRow() {
+            const tableBody = document.querySelector('#personTable tbody');
+            const newRow = document.createElement('tr');
+
+            newRow.innerHTML = `
+                <td><input type="text" name="name" placeholder="Enter name" required></td>
+                <td>
+                    <select name="category" required>
+                        <option value="" disabled selected>Select category</option>
+                        <option value="Adult">Adult</option>
+                        <option value="Child">Child</option>
+                        <option value="Baby">Baby</option>
+                    </select>
+                </td>
+                <td><button type="button" class="removeRowBtn" onclick="removeRow(this)">Remove</button></td>
+            `;
+            tableBody.appendChild(newRow);
+        }
+
+        function removeRow(button) {
+            const row = button.parentElement.parentElement;
+            row.remove();
+        }
+
+        async function submitForm() {
+            const rows = document.querySelectorAll('#personTable tbody tr');
+            const entries = [];
+
+            rows.forEach(row => {
+                const name = row.querySelector('input[name="name"]').value;
+                const category = row.querySelector('select[name="category"]').value;
+
+                if (name && category) {
+                    entries.push({ name, category });
+                }
+            });
+
+            if (entries.length === 0) {
+                alert('Please fill in at least one person!');
                 return;
             }
 
             const response = await fetch('https://script.google.com/macros/s/AKfycbwDLiQ1_7KsQ3qj57DVZkXQHDW0mvJMiolbFFzFr0yBt8E_Q5mydoGnLzyc_OEHROGcJQ/exec', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: name,
-                    category: category.value
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(entries),
             });
 
             if (response.ok) {
-                alert('Form submitted successfully!');
+                alert('All data submitted successfully!');
                 document.getElementById('personForm').reset();
+                document.querySelector('#personTable tbody').innerHTML = `
+                    <tr>
+                        <td><input type="text" name="name" placeholder="Enter name" required></td>
+                        <td>
+                            <select name="category" required>
+                                <option value="" disabled selected>Select category</option>
+                                <option value="Adult">Adult</option>
+                                <option value="Child">Child</option>
+                                <option value="Baby">Baby</option>
+                            </select>
+                        </td>
+                        <td><button type="button" class="removeRowBtn" onclick="removeRow(this)">Remove</button></td>
+                    </tr>
+                `;
             } else {
-                alert('Error submitting the form.');
+                alert('Error submitting data. Please try again.');
             }
         }
     </script>
