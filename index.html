@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save to Google Sheet</title>
+</head>
+<body>
+    <h1>Person Details Form</h1>
+    <form id="personForm">
+        <div>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div>
+            <label>Category:</label>
+            <input type="radio" id="adult" name="category" value="Adult" required>
+            <label for="adult">Adult</label>
+            <input type="radio" id="child" name="category" value="Child">
+            <label for="child">Child</label>
+            <input type="radio" id="baby" name="category" value="Baby">
+            <label for="baby">Baby</label>
+        </div>
+        <button type="button" onclick="submitForm()">Submit</button>
+    </form>
+    <script>
+        async function submitForm() {
+            const name = document.getElementById('name').value;
+            const category = document.querySelector('input[name="category"]:checked');
+
+            if (!name || !category) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            const response = await fetch('YOUR_WEB_APP_URL', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    category: category.value
+                }),
+            });
+
+            if (response.ok) {
+                alert('Form submitted successfully!');
+                document.getElementById('personForm').reset();
+            } else {
+                alert('Error submitting the form.');
+            }
+        }
+    </script>
+</body>
+</html>
